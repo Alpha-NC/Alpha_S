@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rapport S8 — Wikicampers × Mayoko</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f4f3ef; --white: #ffffff;
+    --ink: #1a1a1e; --ink-dim: rgba(26,26,30,0.5); --ink-faint: rgba(26,26,30,0.12);
+    --teal: #1a9e94; --teal-light: rgba(26,158,148,0.08); --teal-mid: rgba(26,158,148,0.15);
+    --yellow: #e8a800; --yellow-light: rgba(232,168,0,0.08);
+    --red: #d94f4f; --red-light: rgba(217,79,79,0.08);
+    --green: #2d9e6b; --green-light: rgba(45,158,107,0.08);
+    --border: rgba(26,26,30,0.1);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--ink); min-height:100vh; }
+
+  .wrapper { max-width:720px; margin:0 auto; padding:48px 24px 80px; }
+
+  .header { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:36px; padding-bottom:28px; border-bottom:1px solid var(--border); }
+  .agency-badge { display:flex; align-items:center; gap:8px; margin-bottom:14px; }
+  .agency-dot { width:8px; height:8px; border-radius:50%; background:var(--teal); }
+  .agency-name { font-size:12px; font-weight:600; color:var(--teal); letter-spacing:.5px; text-transform:uppercase; }
+  .report-title { font-family:'DM Serif Display',serif; font-size:28px; line-height:1.2; color:var(--ink); letter-spacing:-.3px; }
+  .report-title em { font-style:italic; color:var(--teal); }
+  .report-meta { margin-top:8px; font-size:12px; color:var(--ink-dim); display:flex; gap:14px; }
+  .rm-sep { color:var(--ink-faint); }
+  .header-right { text-align:right; flex-shrink:0; }
+  .period-badge { display:inline-block; background:var(--white); border:1px solid var(--border); border-radius:8px; padding:8px 14px; font-size:11px; color:var(--ink-dim); font-family:'DM Mono',monospace; }
+  .period-val { display:block; font-size:14px; color:var(--ink); font-weight:500; margin-top:3px; font-family:'DM Sans',sans-serif; }
+
+  .msg-block { background:var(--white); border-radius:14px; padding:24px; margin-bottom:24px; border:1px solid var(--border); }
+  .msg-from { display:flex; align-items:center; gap:12px; margin-bottom:16px; }
+  .msg-avatar { width:40px; height:40px; border-radius:50%; background:linear-gradient(135deg,var(--teal),#0e6e67); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:#fff; flex-shrink:0; }
+  .msg-author { font-size:13px; font-weight:600; }
+  .msg-role { font-size:11px; color:var(--ink-dim); margin-top:1px; }
+  .msg-text { font-size:14px; line-height:1.7; color:var(--ink); }
+  .msg-text p + p { margin-top:10px; }
+
+  .score-row { display:grid; grid-template-columns:auto 1fr; gap:20px; background:var(--white); border-radius:14px; padding:22px 24px; margin-bottom:18px; border:1px solid var(--border); align-items:center; }
+  .score-num { text-align:center; }
+  .sn-val { font-family:'DM Serif Display',serif; font-size:52px; color:var(--yellow); line-height:1; letter-spacing:-2px; }
+  .sn-tot { font-size:13px; color:var(--ink-dim); }
+  .sn-label { font-size:10px; text-transform:uppercase; letter-spacing:1px; color:var(--ink-dim); margin-top:2px; }
+  .si-status { font-size:15px; font-weight:600; color:var(--yellow); margin-bottom:6px; }
+  .si-desc { font-size:13px; color:var(--ink-dim); line-height:1.55; margin-bottom:14px; }
+  .si-bar { height:6px; background:var(--ink-faint); border-radius:3px; overflow:hidden; }
+  .si-fill { height:100%; background:linear-gradient(90deg,var(--teal),var(--yellow)); border-radius:3px; }
+  .si-pct { font-size:11px; color:var(--ink-dim); margin-top:6px; font-family:'DM Mono',monospace; display:flex; justify-content:space-between; }
+
+  .section { margin-bottom:18px; }
+  .section-title { font-family:'DM Serif Display',serif; font-size:18px; color:var(--ink); margin-bottom:12px; display:flex; align-items:center; gap:10px; }
+  .st-line { flex:1; height:1px; background:var(--border); }
+  .card { background:var(--white); border-radius:14px; border:1px solid var(--border); overflow:hidden; }
+
+  .livrable-row { display:flex; align-items:center; gap:12px; padding:12px 20px; border-bottom:1px solid var(--border); }
+  .livrable-row:last-child { border-bottom:none; }
+  .lv-icon { width:26px; height:26px; border-radius:7px; display:flex; align-items:center; justify-content:center; font-size:12px; flex-shrink:0; }
+  .lvi-done { background:var(--green-light); color:var(--green); }
+  .lvi-wip { background:var(--yellow-light); color:var(--yellow); }
+  .lv-info { flex:1; }
+  .lv-name { font-size:13px; font-weight:500; }
+  .lv-detail { font-size:11px; color:var(--ink-dim); margin-top:2px; }
+  .lv-chip { font-size:10px; padding:2px 8px; border-radius:5px; font-weight:500; font-family:'DM Mono',monospace; white-space:nowrap; flex-shrink:0; }
+  .lvc-green { background:var(--green-light); color:var(--green); }
+  .lvc-yellow { background:var(--yellow-light); color:var(--yellow); }
+
+  .decision-card { background:var(--white); border-radius:14px; border:1px solid var(--border); overflow:hidden; margin-bottom:12px; }
+  .dc-urgent { border-color:rgba(217,79,79,0.3); background:#fffafa; }
+  .dc-header { display:flex; align-items:center; gap:10px; padding:14px 20px; border-bottom:1px solid var(--border); }
+  .dc-urgent .dc-header { border-color:rgba(217,79,79,0.15); }
+  .dc-label { font-size:12px; font-weight:600; }
+  .dc-deadline { margin-left:auto; font-size:11px; font-family:'DM Mono',monospace; padding:2px 8px; border-radius:5px; }
+  .dc-deadline.urgent { background:var(--red-light); color:var(--red); }
+  .dc-body { padding:14px 20px; font-size:13px; color:var(--ink-dim); line-height:1.6; }
+  .dc-body strong { color:var(--ink); }
+  .dc-actions { display:flex; gap:10px; padding:14px 20px; border-top:1px solid var(--border); }
+  .dc-btn { flex:1; padding:10px; border-radius:9px; font-size:13px; font-weight:600; cursor:pointer; text-align:center; transition:all .15s; font-family:'DM Sans',sans-serif; }
+  .dc-approve { background:var(--teal); color:white; border:none; }
+  .dc-approve:hover { opacity:.9; }
+  .dc-adjust { background:transparent; color:var(--ink-dim); border:1px solid var(--border); }
+  .dc-adjust:hover { color:var(--ink); border-color:rgba(26,26,30,.3); }
+  .dc-adjust-area { display:none; padding:0 20px 14px; }
+  .dc-adjust-area.open { display:block; }
+  .dc-textarea { width:100%; min-height:60px; border:1px solid var(--border); border-radius:8px; padding:10px 12px; font-family:'DM Sans',sans-serif; font-size:12px; color:var(--ink); background:var(--bg); resize:none; outline:none; }
+  .dc-textarea:focus { border-color:rgba(26,158,148,.3); }
+  .dc-send { margin-top:8px; padding:7px 16px; border-radius:7px; font-size:12px; font-weight:600; background:var(--ink); color:white; border:none; cursor:pointer; font-family:'DM Sans',sans-serif; }
+
+  .preview-row { display:flex; align-items:flex-start; gap:12px; padding:12px 20px; border-bottom:1px solid var(--border); }
+  .preview-row:last-child { border-bottom:none; }
+  .pv-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; margin-top:4px; }
+  .pv-text { flex:1; font-size:13px; line-height:1.5; color:var(--ink); }
+  .pv-sub { font-size:11px; color:var(--ink-dim); margin-top:2px; }
+  .pv-date { font-size:11px; font-family:'DM Mono',monospace; color:var(--ink-dim); white-space:nowrap; flex-shrink:0; }
+
+  .footer { margin-top:48px; padding-top:20px; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+  .footer-brand { display:flex; align-items:center; gap:8px; }
+  .fb-dot { width:6px; height:6px; border-radius:50%; background:var(--teal); }
+  .fb-name { font-size:12px; font-weight:600; color:var(--teal); }
+  .footer-meta { font-size:11px; color:var(--ink-dim); font-family:'DM Mono',monospace; text-align:right; }
+
+  /* BANDEAU APERÇU AGENCE */
+  .agency-only {
+    background:#fffbea;
+    border:1px dashed rgba(232,168,0,.4);
+    border-radius:10px;
+    padding:12px 16px;
+    margin-bottom:24px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .ao-icon { font-size:14px; flex-shrink:0; }
+  .ao-text { font-size:11px; color:var(--yellow); font-family:'DM Mono',monospace; flex:1; }
+  .ao-back {
+    padding:5px 14px;
+    background:rgba(232,168,0,.15);
+    border:1px solid rgba(232,168,0,.35);
+    color:var(--yellow);
+    border-radius:7px;
+    font-size:11px;
+    font-weight:600;
+    cursor:pointer;
+    font-family:'DM Sans',sans-serif;
+    white-space:nowrap;
+    transition:all .15s;
+    flex-shrink:0;
+  }
+  .ao-back:hover { background:rgba(232,168,0,.28); }
+</style>
+</head>
+<body>
+
+<div class="wrapper">
+
+  <!-- BANDEAU APERÇU AGENCE -->
+  <div class="agency-only">
+    <div class="ao-icon">👁</div>
+    <div class="ao-text">APERÇU AGENCE · Ce bandeau n'est pas visible par Thomas — envoyez ce rapport depuis le hub pour le distribuer</div>
+    <button class="ao-back" onclick="backToHub()">← Retour au hub</button>
+  </div>
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-left">
+      <div class="agency-badge">
+        <div class="agency-dot"></div>
+        <div class="agency-name">Agence Mayoko</div>
+      </div>
+      <div class="report-title">Rapport <em>Wikicampers</em><br>— Semaine 8</div>
+      <div class="report-meta">
+        <span>Campagne printemps 2026</span>
+        <span class="rm-sep">·</span>
+        <span>Pour Thomas Léger</span>
+        <span class="rm-sep">·</span>
+        <span>Généré lun. 17 fév.</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="period-badge">
+        Semaine en cours
+        <span class="period-val">17–21 fév. 2026</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- MESSAGE PERSONNALISÉ MATHIEU -->
+  <div class="msg-block">
+    <div class="msg-from">
+      <div class="msg-avatar">MR</div>
+      <div>
+        <div class="msg-author">Mathieu Rousset</div>
+        <div class="msg-role">Directeur de création · Agence Mayoko</div>
+      </div>
+    </div>
+    <div class="msg-text">
+      <p>Salut Thomas ! On avance bien sur la campagne — storyboard, formats Meta Ads et textes landing sont bouclés et dans les clous.</p>
+      <p>Il nous reste <strong>absolument besoin de ta validation sur le script du film</strong> cette semaine. Le tournage est dans 8 jours et si on part vendredi au plus tard, tout est calé pour un lancement campagne mi-mars comme prévu.</p>
+      <p>Si tu veux qu'on en parle 15 minutes avant de valider, je suis dispo demain matin. 🤙</p>
+    </div>
+  </div>
+
+  <!-- SCORE SANTÉ PROJET -->
+  <div class="score-row">
+    <div class="score-num">
+      <div class="sn-val">72</div>
+      <div class="sn-tot">/100</div>
+      <div class="sn-label">Santé projet</div>
+    </div>
+    <div class="score-info">
+      <div class="si-status">⚡ Un point d'attention cette semaine</div>
+      <div class="si-desc">Le projet avance bien — 8 livrables sur 11 sont terminés. Il reste une validation importante de ta part sur le script du film pour ne pas décaler la suite.</div>
+      <div class="si-bar"><div class="si-fill" style="width:60%;"></div></div>
+      <div class="si-pct"><span>Avancement global</span><span>60%</span></div>
+    </div>
+  </div>
+
+  <!-- LIVRABLES -->
+  <div class="section">
+    <div class="section-title">
+      Ce qu'on a livré cette semaine
+      <div class="st-line"></div>
+    </div>
+    <div class="card">
+      <div class="livrable-row">
+        <div class="lv-icon lvi-done">✓</div>
+        <div class="lv-info">
+          <div class="lv-name">Storyboard complet — "Le Dilemme"</div>
+          <div class="lv-detail">Séquence plan par plan · 28 images · Direction artistique validée en interne</div>
+        </div>
+        <div class="lv-chip lvc-green">Livré</div>
+      </div>
+      <div class="livrable-row">
+        <div class="lv-icon lvi-done">✓</div>
+        <div class="lv-info">
+          <div class="lv-name">6 formats Meta Ads — Printemps</div>
+          <div class="lv-detail">Carré · Stories · Reels · Déclinaisons couleur chaude / fraîche</div>
+        </div>
+        <div class="lv-chip lvc-green">Livré</div>
+      </div>
+      <div class="livrable-row">
+        <div class="lv-icon lvi-done">✓</div>
+        <div class="lv-info">
+          <div class="lv-name">Textes landing page</div>
+          <div class="lv-detail">Hero, section bénéfices, CTA, FAQ · Ton van life lifestyle</div>
+        </div>
+        <div class="lv-chip lvc-green">Livré</div>
+      </div>
+      <div class="livrable-row">
+        <div class="lv-icon lvi-done">✓</div>
+        <div class="lv-info">
+          <div class="lv-name">Moodboard direction artistique</div>
+          <div class="lv-detail">Références visuelles film · Ambiance van life vs bureau · Palette couleurs</div>
+        </div>
+        <div class="lv-chip lvc-green">Livré</div>
+      </div>
+      <div class="livrable-row">
+        <div class="lv-icon lvi-wip">⏳</div>
+        <div class="lv-info">
+          <div class="lv-name">Script film "Le Dilemme"</div>
+          <div class="lv-detail">V2 envoyée · En attente de ta validation · Deadline vendredi</div>
+        </div>
+        <div class="lv-chip lvc-yellow">Ta décision requise</div>
+      </div>
+      <div class="livrable-row">
+        <div class="lv-icon lvi-wip">⏳</div>
+        <div class="lv-info">
+          <div class="lv-name">Setup tracking Meta Ads</div>
+          <div class="lv-detail">Pixel · UTM · Audiences configurées · En cours côté agence</div>
+        </div>
+        <div class="lv-chip lvc-yellow">En cours</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DÉCISION REQUISE -->
+  <div class="section">
+    <div class="section-title">
+      Ta décision cette semaine
+      <div class="st-line"></div>
+    </div>
+
+    <div class="decision-card dc-urgent">
+      <div class="dc-header">
+        <span style="font-size:16px;">🎬</span>
+        <div class="dc-label" style="color:var(--red);">Validation du script — "Le Dilemme" v2</div>
+        <div class="dc-deadline urgent">Avant vendredi 21 fév.</div>
+      </div>
+      <div class="dc-body">
+        La v2 du script intègre tes retours du point mardi dernier — la scène d'ouverture bureau a été rallongée, et on a ajouté le monologue intérieur du personnage au volant. <strong>Si tu valides vendredi</strong>, le tournage est maintenu lundi 24 et la campagne peut partir comme prévu mi-mars.
+      </div>
+      <div class="dc-actions">
+        <button class="dc-btn dc-approve" onclick="this.textContent='✓ Validé — merci Thomas !'">✓ Valider le script</button>
+        <button class="dc-btn dc-adjust" onclick="document.getElementById('adj1').classList.toggle('open')">Demander un ajustement</button>
+      </div>
+      <div class="dc-adjust-area" id="adj1">
+        <textarea class="dc-textarea" placeholder="Décris ce que tu voudrais changer sur le script..."></textarea>
+        <button class="dc-send">Envoyer à Mathieu</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- SEMAINE PROCHAINE -->
+  <div class="section">
+    <div class="section-title">
+      Ce qui arrive la semaine prochaine
+      <div class="st-line"></div>
+    </div>
+    <div class="card">
+      <div class="preview-row">
+        <div class="pv-dot" style="background:var(--teal);"></div>
+        <div>
+          <div class="pv-text" style="font-weight:500;">Tournage du film — si script validé vendredi</div>
+          <div class="pv-sub">Équipe de 5 personnes · Décors réservés · Journée complète</div>
+        </div>
+        <div class="pv-date">Lun. 24 fév.</div>
+      </div>
+      <div class="preview-row">
+        <div class="pv-dot" style="background:var(--yellow);"></div>
+        <div>
+          <div class="pv-text">Motion design intro film — travaux en cours</div>
+          <div class="pv-sub">Animation logo + titre · Ouverture 5 secondes</div>
+        </div>
+        <div class="pv-date">S9</div>
+      </div>
+      <div class="preview-row">
+        <div class="pv-dot" style="background:var(--green);"></div>
+        <div>
+          <div class="pv-text">Lancement campagne Meta Ads — dès que le film est prêt</div>
+          <div class="pv-sub">Budget 8k€ · Audience 25–35 ans · Ciblage nomades et micro-aventuriers</div>
+        </div>
+        <div class="pv-date">Après tournage</div>
+      </div>
+      <div class="preview-row">
+        <div class="pv-dot" style="background:var(--teal);"></div>
+        <div>
+          <div class="pv-text">Point hebdo mardi matin comme d'habitude</div>
+          <div class="pv-sub">On fait le bilan tournage + on cadre la suite</div>
+        </div>
+        <div class="pv-date">Mar. 25 fév.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <div class="footer-brand">
+      <div class="fb-dot"></div>
+      <div class="fb-name">Agence Mayoko</div>
+      <span style="font-size:11px;color:var(--ink-dim);margin-left:4px;">· Bidart, Pays Basque</span>
+    </div>
+    <div class="footer-meta">
+      Rapport généré automatiquement chaque lundi<br>
+      Pour toute question : mathieu.rousset@mayoko.fr
+    </div>
+  </div>
+
+</div>
+
+<script>
+  function backToHub() {
+    document.body.style.transition = 'opacity .18s ease';
+    document.body.style.opacity = '0';
+    setTimeout(() => { window.location.href = 'reporting.html'; }, 180);
+  }
+  document.addEventListener('DOMContentLoaded', () => {
+    document.body.style.opacity = '0';
+    document.body.style.transition = 'opacity .22s ease';
+    requestAnimationFrame(() => requestAnimationFrame(() => { document.body.style.opacity = '1'; }));
+  });
+</script>
+</body>
+</html>

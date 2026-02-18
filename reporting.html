@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mayoko — Reporting</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0f0f11; --surface:#16161a; --surface2:#1e1e24; --surface3:#25252d;
+    --border:rgba(255,255,255,0.07);
+    --teal:#2ec4b6; --teal-dim:rgba(46,196,182,0.12);
+    --yellow:#f9c846; --yellow-dim:rgba(249,200,70,0.12);
+    --red:#f05d5e; --red-dim:rgba(240,93,94,0.12);
+    --green:#6fcf97; --green-dim:rgba(111,207,151,0.12);
+    --purple:#bb9af7; --purple-dim:rgba(187,154,247,0.12);
+    --orange:#ff9e64; --orange-dim:rgba(255,158,100,0.12);
+    --text:rgba(255,255,255,0.88); --text-dim:rgba(255,255,255,0.45);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; display:flex; overflow:hidden; }
+
+  .sidebar { width:220px; min-width:220px; background:var(--surface); border-right:1px solid var(--border); display:flex; flex-direction:column; padding:24px 0; }
+  .logo { padding:0 20px 24px; border-bottom:1px solid var(--border); margin-bottom:12px; }
+  .logo-name { font-size:14px; font-weight:600; }
+  .logo-name span { color:var(--teal); }
+  .logo-sub { font-size:10px; color:var(--text-dim); margin-top:2px; font-family:'DM Mono',monospace; }
+  .nav-section { padding:8px 12px 4px; font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-dim); font-weight:500; }
+  .nav-item { display:flex; align-items:center; gap:10px; padding:9px 20px; font-size:13px; color:var(--text-dim); cursor:pointer; transition:all .15s; position:relative; }
+  .nav-item:hover { color:var(--text); background:var(--surface2); }
+  .nav-item.active { color:var(--teal); background:var(--teal-dim); }
+  .nav-item.active::before { content:''; position:absolute; left:0; top:0; bottom:0; width:2px; background:var(--teal); border-radius:0 2px 2px 0; }
+  .badge { margin-left:auto; font-size:9px; font-weight:600; padding:2px 6px; border-radius:10px; font-family:'DM Mono',monospace; }
+  .sidebar-bottom { margin-top:auto; padding:16px 20px; border-top:1px solid var(--border); }
+  .user-pill { display:flex; align-items:center; gap:10px; }
+  .avatar-sm { width:30px; height:30px; border-radius:50%; background:linear-gradient(135deg,var(--teal),#1a8a82); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:600; color:#fff; flex-shrink:0; }
+  .user-name { font-size:12px; font-weight:500; }
+  .user-role { font-size:10px; color:var(--text-dim); }
+  .status-dot { width:7px; height:7px; border-radius:50%; background:var(--green); box-shadow:0 0 6px var(--green); }
+
+  .main { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+  .topbar { display:flex; align-items:center; padding:0 28px; height:56px; border-bottom:1px solid var(--border); background:var(--surface); flex-shrink:0; gap:12px; }
+  .topbar-title { font-size:14px; font-weight:500; color:var(--text-dim); }
+  .topbar-title span { color:var(--text); }
+  .topbar-right { margin-left:auto; display:flex; align-items:center; gap:8px; }
+  .btn { padding:6px 14px; border-radius:7px; font-size:12px; font-weight:500; cursor:pointer; border:1px solid var(--border); background:var(--surface2); color:var(--text-dim); font-family:'DM Sans',sans-serif; transition:all .15s; }
+  .btn.primary { background:var(--teal-dim); color:var(--teal); border-color:rgba(46,196,182,.25); }
+  .live-badge { display:flex; align-items:center; gap:6px; background:var(--green-dim); border:1px solid rgba(111,207,151,.2); padding:4px 10px; border-radius:20px; font-size:11px; color:var(--green); font-family:'DM Mono',monospace; }
+  .live-dot { width:6px; height:6px; border-radius:50%; background:var(--green); animation:pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+  .client-tabs { display:flex; gap:0; border-bottom:1px solid var(--border); background:var(--surface); flex-shrink:0; padding:0 28px; }
+  .ctab { display:flex; align-items:center; gap:8px; padding:11px 16px 12px; font-size:12px; cursor:pointer; color:var(--text-dim); border-bottom:2px solid transparent; transition:all .15s; position:relative; top:1px; }
+  .ctab:hover { color:var(--text); }
+  .ctab.active { color:var(--text); border-bottom-color:var(--teal); }
+  .ctab-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+
+  .content { flex:1; overflow-y:auto; padding:20px 28px; display:flex; flex-direction:column; gap:16px; }
+  .content::-webkit-scrollbar { width:3px; }
+  .content::-webkit-scrollbar-thumb { background:var(--border); border-radius:4px; }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+  /* HEALTH */
+  .health { background:var(--yellow-dim); border:1px solid rgba(249,200,70,.2); border-radius:12px; padding:16px 20px; display:flex; align-items:center; gap:18px; animation:fadeUp .3s ease both; }
+  .health-score { text-align:center; flex-shrink:0; }
+  .hs-num { font-size:40px; font-weight:300; letter-spacing:-2px; color:var(--yellow); line-height:1; }
+  .hs-tot { font-size:14px; color:var(--text-dim); }
+  .hs-label { font-size:9px; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px; margin-top:2px; }
+  .hdiv { width:1px; height:56px; background:var(--border); flex-shrink:0; }
+  .health-info { flex:1; }
+  .hi-title { font-size:16px; font-weight:600; color:var(--yellow); }
+  .hi-desc { font-size:12px; color:var(--text-dim); margin-top:4px; line-height:1.5; }
+  .health-metrics { display:flex; gap:20px; flex-shrink:0; }
+  .hm { text-align:center; }
+  .hm-val { font-size:22px; font-weight:300; letter-spacing:-.5px; }
+  .hm-label { font-size:10px; color:var(--text-dim); text-transform:uppercase; letter-spacing:.5px; margin-top:2px; }
+  .health-actions { display:flex; flex-direction:column; gap:8px; flex-shrink:0; }
+  .send-btn { padding:10px 18px; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer; border:none; font-family:'DM Sans',sans-serif; white-space:nowrap; transition:all .2s; }
+  .send-btn.locked { background:var(--surface3); color:var(--text-dim); cursor:not-allowed; }
+  .send-btn.unlocked { background:var(--teal); color:#000; cursor:pointer; }
+  .send-btn.unlocked:hover { opacity:.9; }
+  .draft-btn { padding:8px 14px; border-radius:8px; font-size:11px; font-weight:500; cursor:pointer; background:transparent; color:var(--text-dim); border:1px solid var(--border); font-family:'DM Sans',sans-serif; text-align:center; }
+
+  /* MESSAGE AGENCE — nouvelle mécanique voix */
+  .msg-panel { background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow:hidden; animation:fadeUp .3s ease .04s both; }
+  .mp-header { display:flex; align-items:center; gap:10px; padding:13px 18px; border-bottom:1px solid var(--border); }
+  .mp-title { font-size:12px; font-weight:500; }
+  .mp-required { display:flex; align-items:center; gap:5px; font-size:10px; color:var(--red); font-family:'DM Mono',monospace; margin-left:auto; }
+  .mp-req-dot { width:5px; height:5px; border-radius:50%; background:var(--red); }
+
+  .mp-body { padding:14px 18px; display:flex; gap:12px; }
+  .mp-av { width:34px; height:34px; border-radius:50%; background:linear-gradient(135deg,var(--teal),#1a8a82); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; color:#fff; flex-shrink:0; }
+  .mp-content { flex:1; }
+  .mp-author { font-size:12px; font-weight:600; margin-bottom:8px; display:flex; align-items:center; gap:8px; }
+  .mp-author-role { font-size:10px; color:var(--text-dim); font-weight:400; }
+
+  .mp-textarea { width:100%; min-height:96px; background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:12px 14px; font-family:'DM Sans',sans-serif; font-size:13px; color:var(--text); resize:none; outline:none; line-height:1.7; transition:all .2s; }
+  .mp-textarea::placeholder { color:rgba(255,255,255,0.2); font-style:italic; }
+  .mp-textarea:focus { border-color:rgba(46,196,182,.4); background:var(--surface3); }
+  .mp-textarea.has-content { border-color:rgba(46,196,182,.2); }
+
+  /* AMORCES */
+  .mp-amorces { padding:0 18px 12px 18px; }
+  .amorces-label { font-size:10px; color:var(--text-dim); font-family:'DM Mono',monospace; margin-bottom:8px; display:flex; align-items:center; gap:6px; }
+  .al-icon { font-size:10px; }
+  .amorces-list { display:flex; flex-direction:column; gap:5px; }
+  .amorce { background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:9px 13px; font-size:12px; color:var(--text-dim); cursor:pointer; transition:all .15s; line-height:1.5; display:flex; align-items:flex-start; gap:8px; }
+  .amorce:hover { background:var(--surface3); color:var(--text); border-color:rgba(46,196,182,.2); }
+  .amorce-arrow { color:var(--teal); flex-shrink:0; font-size:10px; margin-top:2px; opacity:0; transition:opacity .15s; }
+  .amorce:hover .amorce-arrow { opacity:1; }
+  .amorce-text { flex:1; }
+  .amorce-context { font-size:10px; font-family:'DM Mono',monospace; color:var(--text-dim); margin-top:3px; }
+
+  /* FOOTER COMPTEUR */
+  .mp-footer { padding:10px 18px 14px; display:flex; align-items:center; gap:10px; border-top:1px solid var(--border); }
+  .mp-counter { font-size:10px; font-family:'DM Mono',monospace; }
+  .mc-empty { color:var(--red); }
+  .mc-ok { color:var(--text-dim); }
+  .mc-limit { color:var(--yellow); }
+  .mp-hint { font-size:10px; color:var(--text-dim); flex:1; }
+  .mp-clear { padding:4px 10px; border-radius:6px; font-size:11px; font-weight:500; background:transparent; color:var(--text-dim); border:1px solid var(--border); cursor:pointer; font-family:'DM Sans',sans-serif; transition:all .15s; }
+  .mp-clear:hover { color:var(--text); }
+
+  /* GRID */
+  .grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; animation:fadeUp .3s ease .08s both; }
+  .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; animation:fadeUp .3s ease .12s both; }
+
+  .panel { background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+  .panel-header { display:flex; align-items:center; padding:13px 18px; border-bottom:1px solid var(--border); gap:8px; }
+  .panel-title { font-size:12px; font-weight:500; }
+  .panel-action { margin-left:auto; font-size:11px; color:var(--teal); cursor:pointer; }
+
+  .kpi-card { padding:16px 18px; }
+  .kpi-label { font-size:9px; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px; font-weight:500; margin-bottom:8px; }
+  .kpi-val { font-size:28px; font-weight:300; letter-spacing:-1px; line-height:1; }
+  .kpi-sub { font-size:11px; color:var(--text-dim); margin-top:5px; }
+
+  .livrable-row { display:flex; align-items:center; gap:10px; padding:9px 18px; border-bottom:1px solid var(--border); font-size:12px; }
+  .livrable-row:last-child { border-bottom:none; }
+  .lv-icon { width:18px; height:18px; border-radius:5px; display:flex; align-items:center; justify-content:center; font-size:10px; flex-shrink:0; }
+  .lvi-done { background:var(--green-dim); color:var(--green); }
+  .lvi-wip { background:var(--yellow-dim); color:var(--yellow); }
+  .lvi-todo { background:var(--surface2); color:var(--text-dim); }
+  .lv-name { flex:1; }
+  .lv-pôle { font-size:10px; color:var(--text-dim); }
+
+  .pole-row { display:flex; align-items:center; gap:10px; padding:9px 18px; border-bottom:1px solid var(--border); }
+  .pole-row:last-child { border-bottom:none; }
+  .pr-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+  .pr-name { font-size:12px; font-weight:500; width:90px; flex-shrink:0; }
+  .pr-bar { flex:1; height:4px; background:var(--surface2); border-radius:2px; overflow:hidden; }
+  .pr-fill { height:100%; border-radius:2px; }
+  .pr-pct { font-size:11px; font-family:'DM Mono',monospace; width:32px; text-align:right; flex-shrink:0; }
+
+  .next-row { display:flex; align-items:center; gap:10px; padding:9px 18px; border-bottom:1px solid var(--border); font-size:12px; }
+  .next-row:last-child { border-bottom:none; }
+  .nr-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+  .nr-text { flex:1; line-height:1.4; }
+  .nr-date { font-size:10px; font-family:'DM Mono',monospace; color:var(--text-dim); white-space:nowrap; }
+
+  .cadrage-row { display:flex; align-items:flex-start; gap:10px; padding:9px 18px; border-bottom:1px solid var(--border); font-size:12px; }
+  .cadrage-row:last-child { border-bottom:none; }
+  .cr-icon { flex-shrink:0; margin-top:1px; }
+  .cr-text { flex:1; line-height:1.5; }
+  .cr-tag { font-size:10px; font-family:'DM Mono',monospace; white-space:nowrap; flex-shrink:0; }
+
+  .auto-note { display:flex; align-items:center; gap:6px; font-size:10px; color:var(--text-dim); padding:8px 18px; background:var(--surface2); border-top:1px solid var(--border); font-family:'DM Mono',monospace; }
+  .an-dot { width:4px; height:4px; border-radius:50%; background:var(--teal); flex-shrink:0; }
+
+  .chip { padding:2px 7px; border-radius:4px; font-size:10px; font-weight:500; font-family:'DM Mono',monospace; }
+  .chip-teal { background:var(--teal-dim); color:var(--teal); }
+  .chip-yellow { background:var(--yellow-dim); color:var(--yellow); }
+  .chip-red { background:var(--red-dim); color:var(--red); }
+  .chip-green { background:var(--green-dim); color:var(--green); }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-name">Mayo<span>ko</span></div>
+    <div class="logo-sub">HUB · v1.0 · LIVE</div>
+  </div>
+  <div class="nav-section">Principal</div>
+  <div class="nav-item" data-nav="dashboard"><span>⬡</span> Dashboard</div>
+  <div class="nav-item" data-nav="projets"><span>◈</span> Projets <span class="badge" style="background:var(--teal);color:#000;">3</span></div>
+  <div class="nav-item" data-nav="demandes"><span>◎</span> Demandes <span class="badge" style="background:var(--yellow);color:#000;">2</span></div>
+  <div class="nav-item active" data-nav="reporting"><span>◷</span> Reporting</div>
+  <div class="nav-section" style="margin-top:8px;">Système</div>
+  <div class="nav-item"><span>⬡</span> Connexions</div>
+  <div class="nav-item"><span>◈</span> Automatisations</div>
+  <div class="nav-item"><span>◎</span> Alertes <span class="badge" style="background:var(--red);">1</span></div>
+  <div class="sidebar-bottom">
+    <div class="user-pill">
+      <div class="avatar-sm">MR</div>
+      <div>
+        <div class="user-name">Mathieu R.</div>
+        <div class="user-role">Directeur de création</div>
+      </div>
+      <div class="status-dot"></div>
+    </div>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <div class="topbar-title">Reporting — <span>Cadrage & suivi client</span></div>
+    <div class="topbar-right">
+      <button class="btn">⬡ Exporter PDF</button>
+      <button class="btn" id="topSendBtn" style="opacity:.4;cursor:not-allowed;" disabled>✉ Message requis</button>
+      <div class="live-badge"><div class="live-dot"></div>Chaque lundi · auto</div>
+    </div>
+  </div>
+
+  <div class="client-tabs">
+    <div class="ctab active"><div class="ctab-dot" style="background:var(--teal);"></div>Wikicampers</div>
+    <div class="ctab"><div class="ctab-dot" style="background:var(--yellow);"></div>Maison Francis Miot</div>
+    <div class="ctab"><div class="ctab-dot" style="background:var(--purple);"></div>Flex-On</div>
+  </div>
+
+  <div class="content">
+
+    <!-- SANTÉ -->
+    <div class="health">
+      <div class="health-score">
+        <div class="hs-num">72</div>
+        <div class="hs-tot">/100</div>
+        <div class="hs-label">Score santé</div>
+      </div>
+      <div class="hdiv"></div>
+      <div class="health-info">
+        <div class="hi-title">⚡ Attention — Blocage actif sur le projet</div>
+        <div class="hi-desc">La validation du script "Le Dilemme" est en attente depuis 3 jours. Sans réponse de Thomas avant vendredi, le tournage et la campagne Meta Ads décalent de 2 semaines.</div>
+      </div>
+      <div class="hdiv"></div>
+      <div class="health-metrics">
+        <div class="hm"><div class="hm-val" style="color:var(--green);">8/11</div><div class="hm-label">Livrables</div></div>
+        <div class="hm"><div class="hm-val" style="color:var(--red);">1</div><div class="hm-label">Blocage</div></div>
+        <div class="hm"><div class="hm-val" style="color:var(--teal);">60%</div><div class="hm-label">Avancement</div></div>
+      </div>
+      <div class="hdiv"></div>
+      <div class="health-actions">
+        <button class="send-btn locked" id="sendBtn" disabled>✉ Message requis avant envoi</button>
+        <div class="draft-btn" onclick="navTo('rapport-client')" style="cursor:pointer;">👁 Aperçu rapport client</div>
+      </div>
+    </div>
+
+    <!-- MESSAGE PERSONNALISÉ — voix agence -->
+    <div class="msg-panel">
+      <div class="mp-header">
+        <div class="mp-title">Votre message à Thomas</div>
+        <div class="mp-required"><div class="mp-req-dot"></div>Requis · l'envoi est bloqué tant que ce champ est vide</div>
+      </div>
+
+      <div class="mp-body">
+        <div class="mp-av">MR</div>
+        <div class="mp-content">
+          <div class="mp-author">
+            Mathieu Rousset
+            <span class="mp-author-role">· Directeur de création</span>
+          </div>
+          <textarea class="mp-textarea" id="msgTextarea" placeholder="Écrivez votre message à Thomas... c'est votre voix, pas celle d'un robot." oninput="onMsgInput(this)"></textarea>
+        </div>
+      </div>
+
+      <!-- AMORCES CONTEXTUELLES -->
+      <div class="mp-amorces">
+        <div class="amorces-label">
+          <span class="al-icon">◈</span>
+          Amorces contextuelles · cliquez pour insérer, modifiez librement
+        </div>
+        <div class="amorces-list">
+          <div class="amorce" onclick="useAmorce(this)">
+            <div class="amorce-arrow">↗</div>
+            <div>
+              <div class="amorce-text">"Salut Thomas ! Bonne semaine de notre côté — storyboard et formats Ads sont bouclés. Il me faut juste ta validation sur le script avant vendredi pour qu'on parte au tournage lundi comme prévu."</div>
+              <div class="amorce-context">Ton : direct · Contexte : blocage script urgent</div>
+            </div>
+          </div>
+          <div class="amorce" onclick="useAmorce(this)">
+            <div class="amorce-arrow">↗</div>
+            <div>
+              <div class="amorce-text">"Thomas, on avance bien — 8 livrables sur 11 sont dans les boîtes. Le seul point qui nécessite ton attention : le script. Si tu veux en parler 15 min avant de valider, je suis dispo demain matin."</div>
+              <div class="amorce-context">Ton : rassurant · Contexte : valoriser l'avancement global</div>
+            </div>
+          </div>
+          <div class="amorce" onclick="useAmorce(this)">
+            <div class="amorce-arrow">↗</div>
+            <div>
+              <div class="amorce-text">"La campagne est vraiment bien partie — les formats Meta Ads sont top et le storyboard raconte exactement ce qu'on voulait. Dernière étape avant le tournage : le script t'attend. 🤙"</div>
+              <div class="amorce-context">Ton : enthousiaste · Contexte : renforcer la confiance avant validation</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mp-footer">
+        <span class="mp-counter mc-empty" id="msgCounter">Vide · 0 mot</span>
+        <span class="mp-hint">Ce message apparaît en haut du rapport de Thomas · c'est votre voix, pas un auto-généré</span>
+        <button class="mp-clear" onclick="clearMsg()">Effacer</button>
+      </div>
+    </div>
+
+    <!-- KPIs + LIVRABLES + AVANCEMENT -->
+    <div class="grid-3">
+
+      <!-- KPIs -->
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">KPIs semaine 8</div><span class="chip chip-teal">vs S7</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;">
+          <div class="kpi-card" style="border-right:1px solid var(--border);border-bottom:1px solid var(--border);">
+            <div class="kpi-label">Livrables livrés</div>
+            <div class="kpi-val" style="color:var(--green);">8</div>
+            <div class="kpi-sub" style="color:var(--green);">↑ +3 vs S7</div>
+          </div>
+          <div class="kpi-card" style="border-bottom:1px solid var(--border);">
+            <div class="kpi-label">En cours / restants</div>
+            <div class="kpi-val" style="color:var(--yellow);">3</div>
+            <div class="kpi-sub">dont 1 bloqué</div>
+          </div>
+          <div class="kpi-card" style="border-right:1px solid var(--border);">
+            <div class="kpi-label">Jours avant tournage</div>
+            <div class="kpi-val" style="color:var(--red);">8</div>
+            <div class="kpi-sub" style="color:var(--red);">Script non validé</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Budget Meta Ads</div>
+            <div class="kpi-val" style="color:var(--teal);">8k€</div>
+            <div class="kpi-sub">Prêt à lancer</div>
+          </div>
+        </div>
+        <div class="auto-note"><div class="an-dot"></div>Depuis Airtable · Notion · S8</div>
+      </div>
+
+      <!-- LIVRABLES -->
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">Livrables S8</div><div class="panel-action">Historique</div></div>
+        <div class="livrable-row">
+          <div class="lv-icon lvi-done">✓</div>
+          <div class="lv-name">Storyboard "Le Dilemme"</div>
+          <div class="lv-pôle">Design</div>
+        </div>
+        <div class="livrable-row">
+          <div class="lv-icon lvi-done">✓</div>
+          <div class="lv-name">Moodboard van life / bureau</div>
+          <div class="lv-pôle">Design</div>
+        </div>
+        <div class="livrable-row">
+          <div class="lv-icon lvi-done">✓</div>
+          <div class="lv-name">6 formats Meta Ads printemps</div>
+          <div class="lv-pôle">Design</div>
+        </div>
+        <div class="livrable-row">
+          <div class="lv-icon lvi-done">✓</div>
+          <div class="lv-name">Textes landing page</div>
+          <div class="lv-pôle">Copy</div>
+        </div>
+        <div class="livrable-row">
+          <div class="lv-icon lvi-wip">⚡</div>
+          <div class="lv-name" style="color:var(--red);">Script film — en attente validation</div>
+          <div class="lv-pôle" style="color:var(--red);">Copy</div>
+        </div>
+        <div class="livrable-row">
+          <div class="lv-icon lvi-wip">⏳</div>
+          <div class="lv-name">Setup tracking Meta Ads</div>
+          <div class="lv-pôle">Paid Ads</div>
+        </div>
+        <div class="auto-note"><div class="an-dot"></div>Centralisé depuis Notion · Airtable</div>
+      </div>
+
+      <!-- AVANCEMENT PÔLES -->
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">Avancement par pôle</div></div>
+        <div class="pole-row">
+          <div class="pr-dot" style="background:var(--teal);"></div>
+          <div class="pr-name" style="color:var(--teal);">🎨 Design</div>
+          <div class="pr-bar"><div class="pr-fill" style="width:70%;background:var(--teal);"></div></div>
+          <div class="pr-pct" style="color:var(--teal);">70%</div>
+          <span class="chip chip-green">Stable</span>
+        </div>
+        <div style="padding:4px 18px 8px;font-size:11px;color:var(--text-dim);">Storyboard ✓ · Formats Ads ✓ · Motion design ⏳</div>
+        <div class="pole-row">
+          <div class="pr-dot" style="background:var(--purple);"></div>
+          <div class="pr-name" style="color:var(--purple);">✍️ Copy</div>
+          <div class="pr-bar"><div class="pr-fill" style="width:40%;background:var(--purple);"></div></div>
+          <div class="pr-pct" style="color:var(--purple);">40%</div>
+          <span class="chip chip-red">Bloqué</span>
+        </div>
+        <div style="padding:4px 18px 8px;font-size:11px;color:var(--text-dim);">Landing ✓ · Script ⚡ attente Thomas · Email ○</div>
+        <div class="pole-row">
+          <div class="pr-dot" style="background:var(--orange);"></div>
+          <div class="pr-name" style="color:var(--orange);">📣 Paid Ads</div>
+          <div class="pr-bar"><div class="pr-fill" style="width:35%;background:var(--orange);"></div></div>
+          <div class="pr-pct" style="color:var(--orange);">35%</div>
+          <span class="chip chip-yellow">En attente</span>
+        </div>
+        <div style="padding:4px 18px 8px;font-size:11px;color:var(--text-dim);">Stratégie ✓ · Tracking ⏳ · Lancement ○</div>
+        <div class="pole-row">
+          <div class="pr-dot" style="background:var(--green);"></div>
+          <div class="pr-name" style="color:var(--green);">🤝 Account</div>
+          <div class="pr-bar"><div class="pr-fill" style="width:85%;background:var(--green);"></div></div>
+          <div class="pr-pct" style="color:var(--green);">85%</div>
+          <span class="chip chip-green">Bon état</span>
+        </div>
+        <div style="padding:4px 18px 8px;font-size:11px;color:var(--text-dim);">Cadrage ✓ · Points hebdo ✓ · Relances auto ⏳</div>
+        <div class="auto-note"><div class="an-dot"></div>Synchronisé Notion · distribué après envoi rapport</div>
+      </div>
+
+    </div>
+
+    <!-- PROCHAINE ETAPE + CADRAGE -->
+    <div class="grid-2">
+
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">Prochaines étapes S9</div><span class="chip chip-teal">planifiées</span></div>
+        <div class="next-row">
+          <div class="nr-dot" style="background:var(--red);"></div>
+          <div class="nr-text"><strong style="color:var(--red);">Validation script</strong> — Decision de Thomas requise avant vendredi pour ne pas décaler le tournage</div>
+          <div class="nr-date">Ven. 21 fév.</div>
+        </div>
+        <div class="next-row">
+          <div class="nr-dot" style="background:var(--teal);"></div>
+          <div class="nr-text">Tournage film "Le Dilemme" — Équipe mobilisée, décors réservés</div>
+          <div class="nr-date">Lun. 24 fév.</div>
+        </div>
+        <div class="next-row">
+          <div class="nr-dot" style="background:var(--orange);"></div>
+          <div class="nr-text">Lancement campagne Meta Ads (budget 8k€) — Audiences et visuels prêts</div>
+          <div class="nr-date">Après tournage</div>
+        </div>
+        <div class="next-row">
+          <div class="nr-dot" style="background:var(--purple);"></div>
+          <div class="nr-text">Séquence email 7 mails abandons — Démarrage rédaction après script validé</div>
+          <div class="nr-date">01 mars</div>
+        </div>
+        <div class="auto-note"><div class="an-dot"></div>Planification automatique · n8n · Notion</div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">Cadrage initial — Objectifs du mandat</div></div>
+        <div class="cadrage-row">
+          <div class="cr-icon">🎯</div>
+          <div class="cr-text">Repositionner Wikicampers comme marque lifestyle nomade — pas juste un loueur de vans</div>
+          <div class="cr-tag chip-teal">Stratégie</div>
+        </div>
+        <div class="cadrage-row">
+          <div class="cr-icon">🎬</div>
+          <div class="cr-text">Film de marque viral : "Le Dilemme" — van life vs vie conventionnelle, ton décalé</div>
+          <div class="cr-tag chip-yellow">Film</div>
+        </div>
+        <div class="cadrage-row">
+          <div class="cr-icon">📣</div>
+          <div class="cr-text">Campagne Meta Ads printemps — Audience 25–35 ans, budget 8k€, KPI : coût/réservation</div>
+          <div class="cr-tag chip-teal">Paid Ads</div>
+        </div>
+        <div class="cadrage-row">
+          <div class="cr-icon">✉️</div>
+          <div class="cr-text">Séquence email abandon réservation — 7 mails, objectif : récupérer 15% des paniers abandonnés</div>
+          <div class="cr-tag chip-green">Email</div>
+        </div>
+        <div class="cadrage-row">
+          <div class="cr-icon">📅</div>
+          <div class="cr-text">Deadline campagne active : 15 mars · Point hebdo mardi matin avec Thomas</div>
+          <div class="cr-tag chip-yellow">Planning</div>
+        </div>
+        <div class="auto-note"><div class="an-dot"></div>Cadrage signé le 05 fév. · tracé dans Notion</div>
+      </div>
+
+    </div>
+
+  </div>
+</main>
+
+<script>
+  const MAX_WORDS = 300;
+
+  function countWords(str) {
+    return str.trim() === '' ? 0 : str.trim().split(/\s+/).length;
+  }
+
+  function onMsgInput(el) {
+    const words = countWords(el.value);
+    const counter = document.getElementById('msgCounter');
+    const sendBtn = document.getElementById('sendBtn');
+    const topBtn = document.getElementById('topSendBtn');
+
+    if (el.value.trim() === '') {
+      counter.textContent = 'Vide · 0 mot';
+      counter.className = 'mp-counter mc-empty';
+      el.classList.remove('has-content');
+      // Locked state
+      sendBtn.textContent = '✉ Message requis avant envoi';
+      sendBtn.className = 'send-btn locked';
+      sendBtn.disabled = true;
+      topBtn.textContent = '✉ Message requis';
+      topBtn.style.opacity = '.4';
+      topBtn.style.cursor = 'not-allowed';
+      topBtn.disabled = true;
+    } else if (words > MAX_WORDS) {
+      counter.textContent = `⚠ ${words} mots · max ${MAX_WORDS}`;
+      counter.className = 'mp-counter mc-limit';
+      el.classList.add('has-content');
+      sendBtn.textContent = '✉ Trop long — réduire';
+      sendBtn.className = 'send-btn locked';
+      sendBtn.disabled = true;
+      topBtn.textContent = '✉ Trop long';
+      topBtn.style.opacity = '.4';
+      topBtn.disabled = true;
+    } else {
+      counter.textContent = `${words} mot${words > 1 ? 's' : ''} · ${MAX_WORDS - words} restants`;
+      counter.className = 'mp-counter mc-ok';
+      el.classList.add('has-content');
+      // Unlocked state
+      sendBtn.textContent = 'Envoyer à Thomas →';
+      sendBtn.className = 'send-btn unlocked';
+      sendBtn.disabled = false;
+      topBtn.textContent = 'Envoyer le rapport →';
+      topBtn.className = 'btn primary';
+      topBtn.style.opacity = '1';
+      topBtn.style.cursor = 'pointer';
+      topBtn.disabled = false;
+    }
+  }
+
+  function useAmorce(el) {
+    const text = el.querySelector('.amorce-text').textContent.replace(/^"|"$/g, '');
+    const textarea = document.getElementById('msgTextarea');
+    textarea.value = text;
+    textarea.focus();
+    onMsgInput(textarea);
+    // Flash feedback
+    el.style.borderColor = 'rgba(46,196,182,.5)';
+    el.style.background = 'var(--surface3)';
+    setTimeout(() => {
+      el.style.borderColor = '';
+      el.style.background = '';
+    }, 600);
+  }
+
+  function clearMsg() {
+    const textarea = document.getElementById('msgTextarea');
+    textarea.value = '';
+    onMsgInput(textarea);
+    textarea.focus();
+  }
+</script>
+<script>
+  // Navigation unifiée Alpha No_Code Hub
+
+  const NAV_MAP = {
+    'dashboard':     'dashboard.html',
+    'projets':       'projets.html',
+    'demandes':      'demandes.html',
+    'reporting':     'reporting.html',
+    'rapport-client':'rapport-client.html',
+  };
+  function navTo(target) {
+    if (!NAV_MAP[target]) return;
+    if (window.location.href.includes(NAV_MAP[target])) return;
+    document.body.style.transition = 'opacity .18s ease';
+    document.body.style.opacity = '0';
+    setTimeout(() => { window.location.href = NAV_MAP[target]; }, 180);
+  }
+  function initNav() {
+    document.querySelectorAll('[data-nav]').forEach(el => {
+      el.style.cursor = 'pointer';
+      el.addEventListener('click', () => navTo(el.getAttribute('data-nav')));
+    });
+  }
+  document.addEventListener('DOMContentLoaded', () => {
+    document.body.style.opacity = '0';
+    document.body.style.transition = 'opacity .22s ease';
+    requestAnimationFrame(() => requestAnimationFrame(() => { document.body.style.opacity = '1'; }));
+    initNav();
+  });
+
+  document.addEventListener('DOMContentLoaded', () => {
+    document.body.style.opacity = '0';
+    document.body.style.transition = 'opacity .22s ease';
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => { document.body.style.opacity = '1'; });
+    });
+    initNav();
+  });
+</script>
+</body>
+</html>

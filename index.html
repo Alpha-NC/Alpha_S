@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mayoko — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0f11;
+    --surface: #16161a;
+    --surface2: #1e1e24;
+    --surface3: #25252d;
+    --border: rgba(255,255,255,0.07);
+    --teal: #2ec4b6;
+    --teal-dim: rgba(46,196,182,0.12);
+    --yellow: #f9c846;
+    --yellow-dim: rgba(249,200,70,0.12);
+    --red: #f05d5e;
+    --red-dim: rgba(240,93,94,0.12);
+    --green: #6fcf97;
+    --green-dim: rgba(111,207,151,0.12);
+    --purple: #bb9af7;
+    --purple-dim: rgba(187,154,247,0.12);
+    --orange: #ff9e64;
+    --orange-dim: rgba(255,158,100,0.12);
+    --text: rgba(255,255,255,0.88);
+    --text-dim: rgba(255,255,255,0.45);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; display:flex; overflow:hidden; }
+
+  /* SIDEBAR */
+  .sidebar { width:220px; min-width:220px; background:var(--surface); border-right:1px solid var(--border); display:flex; flex-direction:column; padding:24px 0; }
+  .logo { padding:0 20px 24px; border-bottom:1px solid var(--border); margin-bottom:12px; }
+  .logo-name { font-size:14px; font-weight:600; }
+  .logo-name span { color:var(--teal); }
+  .logo-sub { font-size:10px; color:var(--text-dim); margin-top:2px; font-family:'DM Mono',monospace; letter-spacing:.5px; }
+  .nav-section { padding:8px 12px 4px; font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-dim); font-weight:500; }
+  .nav-item { display:flex; align-items:center; gap:10px; padding:9px 20px; font-size:13px; color:var(--text-dim); cursor:pointer; transition:all .15s; position:relative; }
+  .nav-item:hover { color:var(--text); background:var(--surface2); }
+  .nav-item.active { color:var(--teal); background:var(--teal-dim); }
+  .nav-item.active::before { content:''; position:absolute; left:0; top:0; bottom:0; width:2px; background:var(--teal); border-radius:0 2px 2px 0; }
+  .badge { margin-left:auto; background:var(--red); color:white; font-size:9px; font-weight:600; padding:2px 6px; border-radius:10px; font-family:'DM Mono',monospace; }
+  .badge.yellow { background:var(--yellow); color:#000; }
+  .sidebar-bottom { margin-top:auto; padding:16px 20px; border-top:1px solid var(--border); }
+  .user-pill { display:flex; align-items:center; gap:10px; }
+  .avatar-sm { width:30px; height:30px; border-radius:50%; background:linear-gradient(135deg,var(--teal),#1a8a82); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:600; color:#fff; flex-shrink:0; }
+  .user-name { font-size:12px; font-weight:500; }
+  .user-role { font-size:10px; color:var(--text-dim); }
+  .status-dot { width:7px; height:7px; border-radius:50%; background:var(--green); box-shadow:0 0 6px var(--green); }
+
+  /* MAIN */
+  .main { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+  .topbar { display:flex; align-items:center; padding:0 28px; height:56px; border-bottom:1px solid var(--border); background:var(--surface); flex-shrink:0; gap:12px; }
+  .topbar-title { font-size:14px; font-weight:500; color:var(--text-dim); }
+  .topbar-title span { color:var(--text); }
+  .topbar-right { margin-left:auto; display:flex; align-items:center; gap:10px; }
+  .live-badge { display:flex; align-items:center; gap:6px; background:var(--green-dim); border:1px solid rgba(111,207,151,.2); padding:4px 10px; border-radius:20px; font-size:11px; color:var(--green); font-family:'DM Mono',monospace; }
+  .live-dot { width:6px; height:6px; border-radius:50%; background:var(--green); animation:pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(.8)} }
+  .btn { padding:6px 14px; border-radius:7px; font-size:12px; font-weight:500; cursor:pointer; border:1px solid var(--border); background:var(--surface2); color:var(--text-dim); font-family:'DM Sans',sans-serif; transition:all .15s; }
+
+  .content { flex:1; overflow-y:auto; padding:24px 28px; display:flex; flex-direction:column; gap:18px; }
+  .content::-webkit-scrollbar { width:3px; }
+  .content::-webkit-scrollbar-thumb { background:var(--border); border-radius:4px; }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+
+  /* KPI STRIP */
+  .kpi-strip { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; animation:fadeUp .3s ease both; }
+  .kpi { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px 18px; }
+  .kpi-label { font-size:10px; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px; font-weight:500; margin-bottom:8px; }
+  .kpi-val { font-size:28px; font-weight:300; letter-spacing:-1px; line-height:1; }
+  .kpi-sub { font-size:11px; color:var(--text-dim); margin-top:6px; }
+  .kpi-sub.warn { color:var(--yellow); }
+  .kpi-sub.ok { color:var(--green); }
+  .kpi-sub.alert { color:var(--red); }
+
+  /* MAIN GRID */
+  .main-grid { display:grid; grid-template-columns:1fr 340px; gap:14px; animation:fadeUp .3s ease .08s both; }
+
+  /* CLIENTS TABLE */
+  .panel { background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+  .panel-header { display:flex; align-items:center; padding:14px 18px; border-bottom:1px solid var(--border); gap:8px; }
+  .panel-title { font-size:13px; font-weight:500; }
+  .panel-action { margin-left:auto; font-size:11px; color:var(--teal); cursor:pointer; }
+
+  .client-row { display:flex; align-items:center; gap:14px; padding:14px 18px; border-bottom:1px solid var(--border); transition:background .15s; cursor:pointer; }
+  .client-row:hover { background:var(--surface2); }
+  .client-row:last-child { border-bottom:none; }
+
+  .client-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+  .client-info { flex:1; min-width:0; }
+  .client-name { font-size:13px; font-weight:500; }
+  .client-project { font-size:11px; color:var(--text-dim); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .client-bar-wrap { width:120px; flex-shrink:0; }
+  .bar-label { display:flex; justify-content:space-between; font-size:10px; color:var(--text-dim); margin-bottom:4px; font-family:'DM Mono',monospace; }
+  .bar { height:4px; background:var(--surface2); border-radius:2px; overflow:hidden; }
+  .bar-fill { height:100%; border-radius:2px; }
+  .chip { padding:2px 8px; border-radius:5px; font-size:10px; font-weight:500; font-family:'DM Mono',monospace; white-space:nowrap; }
+  .chip-green { background:var(--green-dim); color:var(--green); }
+  .chip-yellow { background:var(--yellow-dim); color:var(--yellow); }
+  .chip-red { background:var(--red-dim); color:var(--red); }
+  .chip-teal { background:var(--teal-dim); color:var(--teal); }
+  .chip-purple { background:var(--purple-dim); color:var(--purple); }
+
+  /* SIDE PANELS */
+  .side-panels { display:flex; flex-direction:column; gap:14px; }
+
+  /* ALERTES */
+  .alert-item { display:flex; align-items:flex-start; gap:10px; padding:10px 14px; border-bottom:1px solid var(--border); }
+  .alert-item:last-child { border-bottom:none; }
+  .alert-icon { width:22px; height:22px; border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:11px; flex-shrink:0; }
+  .ai-yellow { background:var(--yellow-dim); color:var(--yellow); }
+  .ai-red { background:var(--red-dim); color:var(--red); }
+  .ai-teal { background:var(--teal-dim); color:var(--teal); }
+  .alert-text { flex:1; font-size:12px; line-height:1.45; color:var(--text-dim); }
+  .alert-text strong { color:var(--text); }
+  .alert-time { font-size:10px; color:var(--text-dim); font-family:'DM Mono',monospace; white-space:nowrap; flex-shrink:0; }
+
+  /* ACTIVITÉ AUTO */
+  .auto-item { display:flex; align-items:flex-start; gap:9px; padding:9px 14px; border-bottom:1px solid var(--border); font-size:11px; color:var(--text-dim); }
+  .auto-item:last-child { border-bottom:none; }
+  .auto-dot { width:5px; height:5px; border-radius:50%; background:var(--teal); flex-shrink:0; margin-top:4px; }
+  .auto-text { flex:1; line-height:1.45; }
+  .auto-time { font-family:'DM Mono',monospace; font-size:10px; white-space:nowrap; flex-shrink:0; }
+
+  /* CONNEXIONS */
+  .conn-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:8px; padding:14px; animation:fadeUp .3s ease .16s both; }
+  .conn-item { background:var(--surface2); border:1px solid var(--border); border-radius:9px; padding:10px 8px; display:flex; flex-direction:column; align-items:center; gap:6px; }
+  .conn-name { font-size:10px; color:var(--text-dim); text-align:center; }
+  .conn-status { font-size:9px; font-family:'DM Mono',monospace; }
+  .conn-ok { color:var(--green); }
+  .conn-warn { color:var(--yellow); }
+  .conn-icon { font-size:16px; }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-name">Mayo<span>ko</span></div>
+    <div class="logo-sub">HUB · v1.0 · LIVE</div>
+  </div>
+  <div class="nav-section">Principal</div>
+  <div class="nav-item active" data-nav="dashboard"><span>⬡</span> Dashboard</div>
+  <div class="nav-item" data-nav="projets"><span>◈</span> Projets <span class="badge" style="background:var(--teal);color:#000;">3</span></div>
+  <div class="nav-item" data-nav="demandes"><span>◎</span> Demandes <span class="badge yellow">2</span></div>
+  <div class="nav-item" data-nav="reporting"><span>◷</span> Reporting</div>
+  <div class="nav-section" style="margin-top:8px;">Système</div>
+  <div class="nav-item"><span>⬡</span> Connexions</div>
+  <div class="nav-item"><span>◈</span> Automatisations</div>
+  <div class="nav-item"><span>◎</span> Alertes <span class="badge">1</span></div>
+  <div class="sidebar-bottom">
+    <div class="user-pill">
+      <div class="avatar-sm">MR</div>
+      <div>
+        <div class="user-name">Mathieu R.</div>
+        <div class="user-role">Directeur de création</div>
+      </div>
+      <div class="status-dot"></div>
+    </div>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <div class="topbar-title">Bonsoir Mathieu — <span>voici où en sont vos clients</span></div>
+    <div class="topbar-right">
+      <button class="btn">Lun. 17 fév. 2026</button>
+      <div class="live-badge"><div class="live-dot"></div>Synchronisé</div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- KPIs -->
+    <div class="kpi-strip">
+      <div class="kpi">
+        <div class="kpi-label">Projets actifs</div>
+        <div class="kpi-val" style="color:var(--teal);">3</div>
+        <div class="kpi-sub ok">Wikicampers · Miot · Flex-On</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Validations en attente</div>
+        <div class="kpi-val" style="color:var(--yellow);">2</div>
+        <div class="kpi-sub warn" data-nav="demandes" style="cursor:pointer;">Thomas L. — 3 jours sans réponse ↗</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Livrables cette semaine</div>
+        <div class="kpi-val" style="color:var(--green);">11</div>
+        <div class="kpi-sub ok">8 livrés · 3 en cours</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Blocage actif</div>
+        <div class="kpi-val" style="color:var(--red);">1</div>
+        <div class="kpi-sub alert" data-nav="projets" style="cursor:pointer;">Wikicampers — script en attente ↗</div>
+      </div>
+    </div>
+
+    <!-- CLIENTS + SIDE -->
+    <div class="main-grid">
+
+      <!-- CLIENTS -->
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Clients en cours</div>
+            <div class="panel-action" data-nav="projets" style="cursor:pointer;">Voir les projets →</div>
+          </div>
+
+          <!-- WIKICAMPERS -->
+          <div class="client-row" data-nav="projets">
+            <div class="client-dot" style="background:var(--teal);"></div>
+            <div class="client-info">
+              <div class="client-name">Wikicampers</div>
+              <div class="client-project">Campagne printemps · Film de marque "Le Dilemme" · Meta Ads</div>
+            </div>
+            <div class="client-bar-wrap">
+              <div class="bar-label"><span>Avancement</span><span style="color:var(--teal);">60%</span></div>
+              <div class="bar"><div class="bar-fill" style="width:60%;background:var(--teal);"></div></div>
+            </div>
+            <span class="chip chip-yellow">⚡ Bloqué</span>
+          </div>
+
+          <!-- MAISON FRANCIS MIOT -->
+          <div class="client-row" data-nav="projets">
+            <div class="client-dot" style="background:var(--yellow);"></div>
+            <div class="client-info">
+              <div class="client-name">Maison Francis Miot</div>
+              <div class="client-project">Community management · Campagne Pâques · Reels savoir-faire</div>
+            </div>
+            <div class="client-bar-wrap">
+              <div class="bar-label"><span>Avancement</span><span style="color:var(--yellow);">45%</span></div>
+              <div class="bar"><div class="bar-fill" style="width:45%;background:var(--yellow);"></div></div>
+            </div>
+            <span class="chip chip-teal">En cours</span>
+          </div>
+
+          <!-- FLEX-ON -->
+          <div class="client-row" data-nav="projets">
+            <div class="client-dot" style="background:var(--purple);"></div>
+            <div class="client-info">
+              <div class="client-name">Flex-On</div>
+              <div class="client-project">Film de marque "Be Flex" · Déclinaisons internationales · Kit presse Q2</div>
+            </div>
+            <div class="client-bar-wrap">
+              <div class="bar-label"><span>Avancement</span><span style="color:var(--purple);">75%</span></div>
+              <div class="bar"><div class="bar-fill" style="width:75%;background:var(--purple);"></div></div>
+            </div>
+            <span class="chip chip-green">Bon état</span>
+          </div>
+        </div>
+
+        <!-- ACTIVITÉ AUTOMATISÉE -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Ce que n8n a fait sans vous</div>
+            <div style="margin-left:auto;font-size:10px;color:var(--text-dim);font-family:'DM Mono',monospace;">Aujourd'hui</div>
+          </div>
+          <div class="auto-item">
+            <div class="auto-dot"></div>
+            <div class="auto-text">Email Isabelle Miot reçu → structuré dans Notion → tâche "Brief Pâques" créée en Design + Copy</div>
+            <div class="auto-time">09:14</div>
+          </div>
+          <div class="auto-item">
+            <div class="auto-dot"></div>
+            <div class="auto-text">Rapport hebdo Flex-On généré et envoyé à Julien Aramburu (PDF + lien portail client)</div>
+            <div class="auto-time">08:00</div>
+          </div>
+          <div class="auto-item">
+            <div class="auto-dot"></div>
+            <div class="auto-text">Relance automatique envoyée à Thomas Léger (Wikicampers) — validation script en attente depuis 3 jours</div>
+            <div class="auto-time">07:30</div>
+          </div>
+          <div class="auto-item">
+            <div class="auto-dot"></div>
+            <div class="auto-text">Calendrier éditorial Instagram Miot S9 créé dans Airtable · 9 posts planifiés</div>
+            <div class="auto-time">Hier 22:00</div>
+          </div>
+          <div class="auto-item">
+            <div class="auto-dot"></div>
+            <div class="auto-text">Tâches Paid Ads Wikicampers mises à jour dans Airtable après réception brief Meta Ads finalisé</div>
+            <div class="auto-time">Hier 17:45</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SIDE PANELS -->
+      <div class="side-panels">
+
+        <!-- ALERTES -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Actions requises</div>
+            <span style="font-size:10px;padding:2px 7px;border-radius:5px;background:var(--red-dim);color:var(--red);font-family:'DM Mono',monospace;">3 actions</span>
+          </div>
+          <div class="alert-item">
+            <div class="alert-icon ai-red">⚡</div>
+            <div class="alert-text" data-nav="demandes" style="cursor:pointer;border-radius:5px;transition:background .15s;"><strong>Wikicampers — Script bloqué.</strong> Thomas n'a pas validé le script "Le Dilemme". Le tournage est prévu dans 8 jours. Décision urgente.</div>
+            <div class="alert-time">J+8</div>
+          </div>
+          <div class="alert-item">
+            <div class="alert-icon ai-yellow">○</div>
+            <div class="alert-text" data-nav="demandes" style="cursor:pointer;border-radius:5px;transition:background .15s;"><strong>Flex-On — Choix voix-off.</strong> Julien attend le casting voix-off final avant de valider le montage. 3 propositions à lui envoyer.</div>
+            <div class="alert-time">Ven.</div>
+          </div>
+          <div class="alert-item">
+            <div class="alert-icon ai-teal">↗</div>
+            <div class="alert-text" data-nav="demandes" style="cursor:pointer;border-radius:5px;transition:background .15s;"><strong>Miot — Brief Pâques reçu.</strong> Isabelle a envoyé ses orientations pour la campagne. À lire et qualifier avant d'assigner.</div>
+            <div class="alert-time">Ce matin</div>
+          </div>
+        </div>
+
+        <!-- CONNEXIONS -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Outils connectés</div>
+            <span style="font-size:11px;color:var(--green);">5/6 actifs</span>
+          </div>
+          <div class="conn-grid">
+            <div class="conn-item">
+              <div class="conn-icon">📧</div>
+              <div class="conn-name">Gmail</div>
+              <div class="conn-status conn-ok">● actif</div>
+            </div>
+            <div class="conn-item">
+              <div class="conn-icon">📋</div>
+              <div class="conn-name">Notion</div>
+              <div class="conn-status conn-ok">● actif</div>
+            </div>
+            <div class="conn-item">
+              <div class="conn-icon">🗂️</div>
+              <div class="conn-name">Airtable</div>
+              <div class="conn-status conn-ok">● actif</div>
+            </div>
+            <div class="conn-item">
+              <div class="conn-icon">📁</div>
+              <div class="conn-name">Drive</div>
+              <div class="conn-status conn-ok">● actif</div>
+            </div>
+            <div class="conn-item">
+              <div class="conn-icon">🔗</div>
+              <div class="conn-name">Sellsy</div>
+              <div class="conn-status conn-warn">⚠ token</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<script>
+  // Navigation unifiée Alpha No_Code Hub
+
+  const NAV_MAP = {
+    'dashboard': 'dashboard.html',
+    'projets':   'projets.html',
+    'demandes':  'demandes.html',
+    'reporting': 'reporting.html',
+  };
+  function navTo(target) {
+    if (!NAV_MAP[target]) return;
+    if (window.location.href.includes(NAV_MAP[target])) return;
+    document.body.style.transition = 'opacity .18s ease';
+    document.body.style.opacity = '0';
+    setTimeout(() => { window.location.href = NAV_MAP[target]; }, 180);
+  }
+  function initNav() {
+    document.querySelectorAll('[data-nav]').forEach(el => {
+      el.style.cursor = 'pointer';
+      el.addEventListener('click', () => navTo(el.getAttribute('data-nav')));
+    });
+  }
+  document.addEventListener('DOMContentLoaded', () => {
+    document.body.style.opacity = '0';
+    document.body.style.transition = 'opacity .22s ease';
+    requestAnimationFrame(() => requestAnimationFrame(() => { document.body.style.opacity = '1'; }));
+    initNav();
+  });
+
+  document.addEventListener('DOMContentLoaded', () => {
+    document.body.style.opacity = '0';
+    document.body.style.transition = 'opacity .22s ease';
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => { document.body.style.opacity = '1'; });
+    });
+    initNav();
+  });
+</script>
+</body>
+</html>
